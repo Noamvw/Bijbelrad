@@ -4,9 +4,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mijn Bijbelrad</title>
+<meta name="theme-color" content="#101d2d">
+
+<title>Het Bijbelrad</title>
+
+<!-- Eigen Bijbelrad-icoontje -->
+<link rel="icon" type="image/png" href="bijbelrad-icon.png">
+<link rel="apple-touch-icon" href="bijbelrad-icon.png">
+
 <style>
 * { box-sizing: border-box; }
+
 body {
   margin: 0;
   padding: 20px;
@@ -15,26 +23,32 @@ body {
   font-family: Georgia, serif;
   text-align: center;
 }
+
 h1 { font-size: 38px; margin-bottom: 5px; }
 .subtitle { color: #d9c69e; margin-bottom: 25px; }
 .container { max-width: 850px; margin: auto; }
+
 .wheel-wrap {
   width: min(90vw, 570px);
   margin: 20px auto;
   position: relative;
 }
+
 canvas { width: 100%; height: auto; }
+
 .pointer {
   position: absolute;
   top: -8px;
   left: 50%;
   transform: translateX(-50%);
-  width: 0; height: 0;
+  width: 0;
+  height: 0;
   border-left: 17px solid transparent;
   border-right: 17px solid transparent;
   border-top: 34px solid #f5d48d;
   z-index: 2;
 }
+
 button {
   border: none;
   border-radius: 12px;
@@ -43,12 +57,15 @@ button {
   font-weight: bold;
   cursor: pointer;
 }
+
 #spin {
   background: linear-gradient(120deg, #b27b37, #f5dda5);
   color: #241b10;
   box-shadow: 0 4px #76512a;
 }
+
 #spin:disabled { opacity: .6; }
+
 .result {
   margin: 22px auto;
   padding: 22px;
@@ -56,18 +73,26 @@ button {
   border: 1px solid #c39a5d;
   border-radius: 15px;
 }
-.result small { color: #d8bd87; letter-spacing: 2px; }
+
+.result small {
+  color: #d8bd87;
+  letter-spacing: 2px;
+}
+
 #chosen {
   font-size: 32px;
   font-weight: bold;
   margin: 12px 0;
+  overflow-wrap: anywhere;
 }
+
 .progress {
   background: #0c1927;
   padding: 18px;
   border-radius: 12px;
   margin: 20px 0;
 }
+
 .bar {
   background: #435367;
   height: 12px;
@@ -75,12 +100,14 @@ button {
   overflow: hidden;
   margin-top: 10px;
 }
+
 #fill {
   height: 100%;
   width: 0;
   background: linear-gradient(90deg, #a8793c, #f4d99d);
   transition: width .3s;
 }
+
 .list {
   background: #f0e3c8;
   color: #382b1d;
@@ -88,7 +115,9 @@ button {
   padding: 20px;
   margin-top: 25px;
 }
+
 .list h2 { margin-top: 0; }
+
 .books {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -97,6 +126,7 @@ button {
   max-height: 450px;
   overflow-y: auto;
 }
+
 .books label {
   padding: 6px 3px;
   font-family: Arial, sans-serif;
@@ -104,11 +134,14 @@ button {
   border-bottom: 1px solid #d9c9a9;
   cursor: pointer;
 }
+
 .books label.done {
   text-decoration: line-through;
   opacity: .55;
 }
+
 .books input { accent-color: #8b5d29; }
+
 #reset {
   background: #344b60;
   color: #f7e8c8;
@@ -116,6 +149,7 @@ button {
   font-size: 13px;
   margin-top: 10px;
 }
+
 @media(max-width:500px) {
   body { padding: 12px; }
   h1 { font-size: 30px; }
@@ -123,8 +157,10 @@ button {
 }
 </style>
 </head>
+
 <body>
 <div class="container">
+
   <h1>✦ Het Bijbelrad ✦</h1>
   <p class="subtitle">Een reis door alle 66 Bijbelboeken</p>
 
@@ -153,6 +189,7 @@ button {
     <div class="books" id="books"></div>
     <button id="reset">Voortgang resetten</button>
   </div>
+
 </div>
 
 <script>
@@ -183,6 +220,7 @@ const ctx = canvas.getContext("2d");
 const center = 350;
 const radius = 335;
 const step = Math.PI * 2 / names.length;
+
 let rotation = 0;
 let busy = false;
 
@@ -231,6 +269,7 @@ function drawWheel() {
   ctx.textAlign = "center";
   ctx.font = "bold 17px Georgia";
   ctx.fillText("BIJBEL",0,6);
+
   ctx.restore();
 
   ctx.beginPath();
@@ -241,11 +280,17 @@ function drawWheel() {
 }
 
 let completed = [];
+
 try {
-  const saved = JSON.parse(localStorage.getItem("bijbelrad-progress") || "[]");
-  if(Array.isArray(saved)) completed = saved.filter(i =>
-    Number.isInteger(i) && i >= 0 && i < names.length
+  const saved = JSON.parse(
+    localStorage.getItem("bijbelrad-progress") || "[]"
   );
+
+  if(Array.isArray(saved)) {
+    completed = saved.filter(i =>
+      Number.isInteger(i) && i >= 0 && i < names.length
+    );
+  }
 } catch(e) {}
 
 const booksDiv = document.getElementById("books");
@@ -253,6 +298,7 @@ const booksDiv = document.getElementById("books");
 names.forEach((name,i) => {
   const label = document.createElement("label");
   const checkbox = document.createElement("input");
+
   checkbox.type = "checkbox";
   checkbox.checked = completed.includes(i);
 
@@ -267,30 +313,41 @@ names.forEach((name,i) => {
 
   label.appendChild(checkbox);
   label.appendChild(document.createTextNode(" " + name));
-  if(completed.includes(i)) label.classList.add("done");
+
+  if(completed.includes(i)) {
+    label.classList.add("done");
+  }
+
   booksDiv.appendChild(label);
 });
 
 function save() {
   try {
-    localStorage.setItem("bijbelrad-progress",JSON.stringify(completed));
+    localStorage.setItem(
+      "bijbelrad-progress",
+      JSON.stringify(completed)
+    );
   } catch(e) {
     alert("Opslaan is niet beschikbaar in deze browser.");
   }
+
   updateProgress();
 }
 
 function updateProgress() {
   document.getElementById("count").textContent =
     completed.length + " / 66 boeken afgerond";
+
   document.getElementById("fill").style.width =
     (completed.length / 66 * 100) + "%";
 
   [...booksDiv.children].forEach((label,i) => {
     label.classList.toggle("done",completed.includes(i));
-    label.querySelector("input").checked = completed.includes(i);
+    label.querySelector("input").checked =
+      completed.includes(i);
   });
 }
+
 updateProgress();
 
 document.getElementById("reset").addEventListener("click", () => {
@@ -307,13 +364,17 @@ document.getElementById("spin").addEventListener("click", () => {
     .filter(i => !completed.includes(i));
 
   if(remaining.length === 0) {
-    document.getElementById("chosen").textContent = "Alle 66 afgerond!";
+    document.getElementById("chosen").textContent =
+      "Alle 66 afgerond!";
+
     document.getElementById("detail").textContent =
       "Wat een mooie mijlpaal!";
+
     return;
   }
 
   busy = true;
+
   const button = document.getElementById("spin");
   button.disabled = true;
 
@@ -321,18 +382,30 @@ document.getElementById("spin").addEventListener("click", () => {
     Math.floor(Math.random() * remaining.length)
   ];
 
-  const target = ((-((chosen + 0.5) * step)) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI);
-  const current = ((rotation % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const target =
+    ((-((chosen + 0.5) * step)) % (2*Math.PI) + 2*Math.PI)
+    % (2*Math.PI);
+
+  const current =
+    ((rotation % (2*Math.PI)) + 2*Math.PI)
+    % (2*Math.PI);
+
   const extra = 2*Math.PI*7;
-  const distance = (target - current + 2*Math.PI) % (2*Math.PI);
+  const distance =
+    (target - current + 2*Math.PI) % (2*Math.PI);
+
   const start = rotation;
   const end = rotation + extra + distance;
   const duration = 5000;
   const startTime = performance.now();
 
   function animate(now) {
-    const progress = Math.min((now-startTime)/duration,1);
+    const progress = Math.min(
+      (now-startTime)/duration,1
+    );
+
     const eased = 1 - Math.pow(1-progress,4);
+
     rotation = start + (end-start)*eased;
     drawWheel();
 
@@ -341,14 +414,18 @@ document.getElementById("spin").addEventListener("click", () => {
     } else {
       rotation = end;
       drawWheel();
-      const book = names[chosen];
-      document.getElementById("chosen").textContent = book;
+
+      document.getElementById("chosen").textContent =
+        names[chosen];
+
       document.getElementById("detail").textContent =
         chosen < 39 ? "Oude Testament" : "Nieuwe Testament";
+
       busy = false;
       button.disabled = false;
     }
   }
+
   requestAnimationFrame(animate);
 });
 
@@ -356,4 +433,3 @@ drawWheel();
 </script>
 </body>
 </html>
-
