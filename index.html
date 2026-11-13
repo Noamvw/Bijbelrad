@@ -1,1 +1,359 @@
 
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mijn Bijbelrad</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 20px;
+  background: linear-gradient(135deg, #101d2d, #344b60);
+  color: #f7e8c8;
+  font-family: Georgia, serif;
+  text-align: center;
+}
+h1 { font-size: 38px; margin-bottom: 5px; }
+.subtitle { color: #d9c69e; margin-bottom: 25px; }
+.container { max-width: 850px; margin: auto; }
+.wheel-wrap {
+  width: min(90vw, 570px);
+  margin: 20px auto;
+  position: relative;
+}
+canvas { width: 100%; height: auto; }
+.pointer {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0; height: 0;
+  border-left: 17px solid transparent;
+  border-right: 17px solid transparent;
+  border-top: 34px solid #f5d48d;
+  z-index: 2;
+}
+button {
+  border: none;
+  border-radius: 12px;
+  padding: 15px 25px;
+  font-size: 17px;
+  font-weight: bold;
+  cursor: pointer;
+}
+#spin {
+  background: linear-gradient(120deg, #b27b37, #f5dda5);
+  color: #241b10;
+  box-shadow: 0 4px #76512a;
+}
+#spin:disabled { opacity: .6; }
+.result {
+  margin: 22px auto;
+  padding: 22px;
+  background: #1c3045;
+  border: 1px solid #c39a5d;
+  border-radius: 15px;
+}
+.result small { color: #d8bd87; letter-spacing: 2px; }
+#chosen {
+  font-size: 32px;
+  font-weight: bold;
+  margin: 12px 0;
+}
+.progress {
+  background: #0c1927;
+  padding: 18px;
+  border-radius: 12px;
+  margin: 20px 0;
+}
+.bar {
+  background: #435367;
+  height: 12px;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+#fill {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #a8793c, #f4d99d);
+  transition: width .3s;
+}
+.list {
+  background: #f0e3c8;
+  color: #382b1d;
+  border-radius: 15px;
+  padding: 20px;
+  margin-top: 25px;
+}
+.list h2 { margin-top: 0; }
+.books {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 5px 12px;
+  text-align: left;
+  max-height: 450px;
+  overflow-y: auto;
+}
+.books label {
+  padding: 6px 3px;
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+  border-bottom: 1px solid #d9c9a9;
+  cursor: pointer;
+}
+.books label.done {
+  text-decoration: line-through;
+  opacity: .55;
+}
+.books input { accent-color: #8b5d29; }
+#reset {
+  background: #344b60;
+  color: #f7e8c8;
+  border: 1px solid #c39a5d;
+  font-size: 13px;
+  margin-top: 10px;
+}
+@media(max-width:500px) {
+  body { padding: 12px; }
+  h1 { font-size: 30px; }
+  .books { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>✦ Het Bijbelrad ✦</h1>
+  <p class="subtitle">Een reis door alle 66 Bijbelboeken</p>
+
+  <div class="wheel-wrap">
+    <div class="pointer"></div>
+    <canvas id="wheel" width="700" height="700"></canvas>
+  </div>
+
+  <button id="spin">✦ DRAAI HET RAD ✦</button>
+
+  <div class="result">
+    <small>JOUW GEKOZEN BIJBELBOEK</small>
+    <div id="chosen">Het rad wacht op jou</div>
+    <div id="detail">Druk op de knop om te draaien.</div>
+  </div>
+
+  <div class="progress">
+    <strong>Jouw voortgang</strong>
+    <p id="count">0 / 66 boeken afgerond</p>
+    <div class="bar"><div id="fill"></div></div>
+  </div>
+
+  <div class="list">
+    <h2>📖 Mijn Bijbelboeken</h2>
+    <p>Vink een boek af als je het helemaal hebt gelezen.</p>
+    <div class="books" id="books"></div>
+    <button id="reset">Voortgang resetten</button>
+  </div>
+</div>
+
+<script>
+const names = [
+"Genesis","Exodus","Leviticus","Numeri","Deuteronomium",
+"Jozua","Richteren","Ruth","1 Samuël","2 Samuël",
+"1 Koningen","2 Koningen","1 Kronieken","2 Kronieken",
+"Ezra","Nehemia","Esther","Job","Psalmen","Spreuken",
+"Prediker","Hooglied","Jesaja","Jeremia","Klaagliederen",
+"Ezechiël","Daniël","Hosea","Joël","Amos","Obadja",
+"Jona","Micha","Nahum","Habakuk","Zefanja","Haggaï",
+"Zacharia","Maleachi",
+"Mattheüs","Markus","Lukas","Johannes","Handelingen",
+"Romeinen","1 Korinthe","2 Korinthe","Galaten","Efeze",
+"Filippenzen","Kolossenzen","1 Thessalonicenzen",
+"2 Thessalonicenzen","1 Timotheüs","2 Timotheüs","Titus",
+"Filemon","Hebreeën","Jakobus","1 Petrus","2 Petrus",
+"1 Johannes","2 Johannes","3 Johannes","Judas","Openbaring"
+];
+
+const colors = [
+"#263f5d","#35536d","#79543f","#986e48",
+"#3c5e52","#725c43","#704653","#a27c4b"
+];
+
+const canvas = document.getElementById("wheel");
+const ctx = canvas.getContext("2d");
+const center = 350;
+const radius = 335;
+const step = Math.PI * 2 / names.length;
+let rotation = 0;
+let busy = false;
+
+function drawWheel() {
+  ctx.clearRect(0,0,700,700);
+  ctx.save();
+  ctx.translate(center,center);
+  ctx.rotate(rotation);
+
+  names.forEach((name,i) => {
+    const start = i * step - Math.PI/2;
+    const end = start + step;
+    const middle = start + step/2;
+
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.arc(0,0,radius,start,end);
+    ctx.closePath();
+    ctx.fillStyle = colors[i % colors.length];
+    ctx.fill();
+    ctx.strokeStyle = "#d9b779";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.save();
+    ctx.rotate(middle);
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#fff0d0";
+    ctx.font = "bold 13px Georgia";
+    ctx.shadowColor = "#17202a";
+    ctx.shadowBlur = 3;
+    ctx.fillText(name, radius - 12, 0);
+    ctx.restore();
+  });
+
+  ctx.beginPath();
+  ctx.arc(0,0,65,0,Math.PI*2);
+  ctx.fillStyle = "#172b40";
+  ctx.fill();
+  ctx.strokeStyle = "#e4c17f";
+  ctx.lineWidth = 5;
+  ctx.stroke();
+
+  ctx.fillStyle = "#f2d9a6";
+  ctx.textAlign = "center";
+  ctx.font = "bold 17px Georgia";
+  ctx.fillText("BIJBEL",0,6);
+  ctx.restore();
+
+  ctx.beginPath();
+  ctx.arc(center,center,radius,0,Math.PI*2);
+  ctx.strokeStyle = "#e4c17f";
+  ctx.lineWidth = 7;
+  ctx.stroke();
+}
+
+let completed = [];
+try {
+  const saved = JSON.parse(localStorage.getItem("bijbelrad-progress") || "[]");
+  if(Array.isArray(saved)) completed = saved.filter(i =>
+    Number.isInteger(i) && i >= 0 && i < names.length
+  );
+} catch(e) {}
+
+const booksDiv = document.getElementById("books");
+
+names.forEach((name,i) => {
+  const label = document.createElement("label");
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.checked = completed.includes(i);
+
+  checkbox.addEventListener("change", () => {
+    if(checkbox.checked) {
+      completed.push(i);
+    } else {
+      completed = completed.filter(x => x !== i);
+    }
+    save();
+  });
+
+  label.appendChild(checkbox);
+  label.appendChild(document.createTextNode(" " + name));
+  if(completed.includes(i)) label.classList.add("done");
+  booksDiv.appendChild(label);
+});
+
+function save() {
+  try {
+    localStorage.setItem("bijbelrad-progress",JSON.stringify(completed));
+  } catch(e) {
+    alert("Opslaan is niet beschikbaar in deze browser.");
+  }
+  updateProgress();
+}
+
+function updateProgress() {
+  document.getElementById("count").textContent =
+    completed.length + " / 66 boeken afgerond";
+  document.getElementById("fill").style.width =
+    (completed.length / 66 * 100) + "%";
+
+  [...booksDiv.children].forEach((label,i) => {
+    label.classList.toggle("done",completed.includes(i));
+    label.querySelector("input").checked = completed.includes(i);
+  });
+}
+updateProgress();
+
+document.getElementById("reset").addEventListener("click", () => {
+  if(confirm("Weet je zeker dat je alle voortgang wilt resetten?")) {
+    completed = [];
+    save();
+  }
+});
+
+document.getElementById("spin").addEventListener("click", () => {
+  if(busy) return;
+
+  const remaining = names.map((_,i) => i)
+    .filter(i => !completed.includes(i));
+
+  if(remaining.length === 0) {
+    document.getElementById("chosen").textContent = "Alle 66 afgerond!";
+    document.getElementById("detail").textContent =
+      "Wat een mooie mijlpaal!";
+    return;
+  }
+
+  busy = true;
+  const button = document.getElementById("spin");
+  button.disabled = true;
+
+  const chosen = remaining[
+    Math.floor(Math.random() * remaining.length)
+  ];
+
+  const target = ((-((chosen + 0.5) * step)) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI);
+  const current = ((rotation % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const extra = 2*Math.PI*7;
+  const distance = (target - current + 2*Math.PI) % (2*Math.PI);
+  const start = rotation;
+  const end = rotation + extra + distance;
+  const duration = 5000;
+  const startTime = performance.now();
+
+  function animate(now) {
+    const progress = Math.min((now-startTime)/duration,1);
+    const eased = 1 - Math.pow(1-progress,4);
+    rotation = start + (end-start)*eased;
+    drawWheel();
+
+    if(progress < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      rotation = end;
+      drawWheel();
+      const book = names[chosen];
+      document.getElementById("chosen").textContent = book;
+      document.getElementById("detail").textContent =
+        chosen < 39 ? "Oude Testament" : "Nieuwe Testament";
+      busy = false;
+      button.disabled = false;
+    }
+  }
+  requestAnimationFrame(animate);
+});
+
+drawWheel();
+</script>
+</body>
+</html>
+
